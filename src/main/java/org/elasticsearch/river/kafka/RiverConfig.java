@@ -15,11 +15,15 @@
  */
 package org.elasticsearch.river.kafka;
 
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.river.RiverName;
 import org.elasticsearch.river.RiverSettings;
 
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -70,7 +74,24 @@ public class RiverConfig {
 
 
     public RiverConfig(RiverName riverName, RiverSettings riverSettings) {
-
+    	System.out.println("RiverConfig init ............................" +riverName.getName() + "   "+riverName.getType());
+    	 ObjectMapper ob = new ObjectMapper();
+        
+		try {
+			 Map<String, Object> map = riverSettings.settings();
+			 String s = ob.writeValueAsString(map);
+			 System.out.println("riverSettings init ............................" +s);
+		} catch (JsonGenerationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
         // Extract kafka related configuration
         if (riverSettings.settings().containsKey("kafka")) {
             Map<String, Object> kafkaSettings = (Map<String, Object>) riverSettings.settings().get("kafka");
@@ -80,10 +101,12 @@ public class RiverConfig {
             zookeeperConnectionTimeout = XContentMapValues.nodeIntegerValue(kafkaSettings.get(ZOOKEEPER_CONNECTION_TIMEOUT), 10000);
             messageType = MessageType.fromValue(XContentMapValues.nodeStringValue(kafkaSettings.get(MESSAGE_TYPE),
                     MessageType.JSON.toValue()));
+           
+            
         } else {
             zookeeperConnect = "localhost";
             zookeeperConnectionTimeout = 10000;
-            topic = "elasticsearch-river-kafka";
+            topic = "riverkafka";
             messageType = MessageType.JSON;
         }
 

@@ -15,6 +15,7 @@
  */
 package org.elasticsearch.river.kafka;
 
+import kafka.consumer.Consumer;
 import kafka.consumer.ConsumerConfig;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
@@ -31,36 +32,88 @@ import java.util.Properties;
  *
  * @author Mariam Hakobyan
  */
-public class KafkaConsumer {
+public class CopyOfKafkaConsumer {
 
     private final static Integer AMOUNT_OF_THREADS_PER_CONSUMER = 1;
-    private final static String GROUP_ID = "elasticsearch-kafka-river22222";
+    private final static String GROUP_ID = "elasticsearch-kafka-river";
     private final static Integer CONSUMER_TIMEOUT = 15000;
 
     private List<KafkaStream<byte[], byte[]>> streams;
     private ConsumerConnector consumerConnector;
 
-    private static final ESLogger logger = ESLoggerFactory.getLogger(KafkaConsumer.class.getName());
+    private static final ESLogger logger = ESLoggerFactory.getLogger(CopyOfKafkaConsumer.class.getName());
 
 
-    public KafkaConsumer(final RiverConfig riverConfig) {
-    	try{
+    public CopyOfKafkaConsumer() {}
+    public CopyOfKafkaConsumer(final RiverConfig riverConfig) {
         consumerConnector = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig(riverConfig));
+
         final Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-        topicCountMap.put(riverConfig.getTopic(), 4);
+        topicCountMap.put(riverConfig.getTopic(), AMOUNT_OF_THREADS_PER_CONSUMER);
 
         final Map<String, List<KafkaStream<byte[], byte[]>>> consumerStreams =
                 consumerConnector.createMessageStreams(topicCountMap);
+
         streams = consumerStreams.get(riverConfig.getTopic());
 
         logger.debug("Index: {}: Started kafka consumer for topic: {} with {} partitions in it.",
                 riverConfig.getIndexName(), riverConfig.getTopic(), streams.size());
+    }
+    
+    public void KafkaConsumers() {
+    	consumerConnector = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig2());
+    	
+    	final Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+    	topicCountMap.put("sdf", AMOUNT_OF_THREADS_PER_CONSUMER);
+    	
+    	final Map<String, List<KafkaStream<byte[], byte[]>>> consumerStreams =
+    			consumerConnector.createMessageStreams(topicCountMap);
+    	
+    	streams = consumerStreams.get("sdf");
+    }
+    
+    public static void main(String[] args) {
+    	try{
+    	new  CopyOfKafkaConsumer().KafkaConsumers();
     	}catch(Exception e){
-    		System.out.println("consumerConnector createmessge...........异常");
     		e.printStackTrace();
     	}
-    }
+	}
+    private ConsumerConfig createConsumerConfig2() {
+//        final Properties props = new Properties();
+//        props.put("zookeeper.connect", riverConfig.getZookeeperConnect());
+//        props.put("zookeeper.connection.timeout.ms", String.valueOf(riverConfig.getZookeeperConnectionTimeout()));
+//        props.put("group.id", GROUP_ID);
+//        props.put("auto.commit.enable", String.valueOf(false));
+//        props.put("consumer.timeout.ms", String.valueOf(CONSUMER_TIMEOUT));
+        
+//        Properties properties = new Properties();
+//		properties.put("zookeeper.connect", "appserver:2181");
+//		properties.put("zookeeper.connection.timeout.ms", 6000);
+//		properties.put("auto.commit.enable", "false");
+//		properties.put("auto.commit.interval.ms", "60000");
+//		properties.put("consumer.timeout.ms", String.valueOf(CONSUMER_TIMEOUT));
+//		properties.put("group.id", "test-group");
 
+		Properties properties = new Properties();
+		 properties.put("zookeeper.connect", "appserver:2181");
+//			properties.put("zookeeper.connection.timeout.ms", 6000);
+		 properties.put("auto.commit.enable", "false");
+		 properties.put("auto.commit.interval.ms", "60000");
+			properties.put("consumer.timeout.ms", String.valueOf(CONSUMER_TIMEOUT));
+		 properties.put("group.id", "test-group");
+		ConsumerConfig consumerConfig = new ConsumerConfig(properties);  
+ 
+/*
+Properties properties = new Properties();
+ properties.put("zookeeper.connect", "appserver:2181");
+ properties.put("auto.commit.enable", "true");
+ properties.put("auto.commit.interval.ms", "60000");
+ properties.put("group.id", "test-group");
+ 
+ConsumerConfig consumerConfig = new ConsumerConfig(properties);*/
+        return consumerConfig;
+    }
     private ConsumerConfig createConsumerConfig(final RiverConfig riverConfig) {
         final Properties props = new Properties();
         props.put("zookeeper.connect", riverConfig.getZookeeperConnect());
@@ -68,10 +121,8 @@ public class KafkaConsumer {
         props.put("group.id", GROUP_ID);
         props.put("auto.commit.enable", String.valueOf(false));
         props.put("consumer.timeout.ms", String.valueOf(CONSUMER_TIMEOUT));
-        props.put("queued.max.message.chunks", String.valueOf(50));
-        ConsumerConfig cc = new ConsumerConfig(props);
-        System.out.println("createcc ....................." + cc.zkConnect()+ "  groupId:" + cc.groupId()+ "  clientId:" + cc.clientId());
-        return cc;
+
+        return new ConsumerConfig(props);
     }
 
     public void shutdown() {

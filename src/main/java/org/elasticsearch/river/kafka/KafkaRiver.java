@@ -44,11 +44,10 @@ public class KafkaRiver extends AbstractRiverComponent implements River {
     @Inject
     protected KafkaRiver(final RiverName riverName, final RiverSettings riverSettings, final Client client) {
         super(riverName, riverSettings);
-
+        try{
         riverConfig = new RiverConfig(riverName, riverSettings);
         kafkaConsumer = new KafkaConsumer(riverConfig);
         stats = new Stats();
-        
         if(null != riverConfig.getStatsdHost()) {
             logger.debug("Found statsd configuration. Starting client (prefix={}, host={}, port={}, interval={})",
                     riverConfig.getStatsdPrefix(), riverConfig.getStatsdHost(), riverConfig.getStatsdPort(),
@@ -74,6 +73,10 @@ public class KafkaRiver extends AbstractRiverComponent implements River {
             case RAW_EXECUTE:
                 elasticsearchProducer = new RawMessageProducer(client, riverConfig, kafkaConsumer, stats);
                 break;
+        }
+        }catch(Exception e){
+        	System.out.println("KafkaRiver init 异常。。。。。。。。。。。。");
+        	e.printStackTrace();
         }
     }
 
